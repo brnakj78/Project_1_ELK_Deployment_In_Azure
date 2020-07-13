@@ -1,0 +1,67 @@
+---
+- name: Install_Config_ELK_with_Docker
+  hosts: elkservers
+  become: true
+  tasks:
+  - name: Make sure the Docker repot key is installed
+    apt_key:
+      id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Make sure Docker repo is installed
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+      state: present
+
+  - name: docker-ce
+    apt:
+      update_cache: yes
+      name: docker-ce
+      state: present
+
+  - name: docker-ce-cli
+    apt:
+      update_cache: yes
+      name: docker-ce-cli
+      state: present
+
+  - name: containerd.io
+    apt:
+      update_cache: yes
+      name: containerd.io
+      state: present
+
+  - name: Install pip3
+    apt:
+      force_apt_get: yes
+      name: python3-pip
+      state: present
+
+  - name: Install Python Docker Module
+    pip:
+      name: docker
+      state: present
+
+  - name: Increase virtual memory and send to sysctl.conf
+    sysctl:
+      name: vm.max_map_count
+      value: 262144
+      sysctl_file: /etc/sysctl.conf
+      state: present
+
+#  - name: Increase Virtual Memory
+#    command: sysctl -w vm.max_map_count=262144
+
+#  - name: Send Inv Virtual Memory to sysctl.conf
+#    command: echo vm.max_map_count=262144 >> /etc/sysctl.conf
+
+  - name: download and launch a docker elk container
+    docker_container:
+      name: elk
+      image: sebp/elk:761
+      state: started
+      published_ports:
+        - 5601:5601
+        - 9200:9200
+        - 5044:5044
